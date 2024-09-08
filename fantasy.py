@@ -1,4 +1,7 @@
 import numpy.random as nr
+
+rng = nr.default_rng()
+import numpy as np
 import copy
 
 from fantasy_core import *
@@ -25,7 +28,7 @@ def sortSeedEnd(teamRes):
 # weeks_complete = 2
 
 
-def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE):
+def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=False):
     scores = copy.deepcopy(SCORES)
     # List of results for each team
     ret = []
@@ -43,28 +46,53 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE):
                 "Champion": 0,
                 "Bottom 4": 0,
                 "Bolan": 0,
+                "NextWeekWin": 0,
             }
         )
 
     # Get averages
-    league_tot = 0
     team_tots = [0] * 12
+    league_arr = []
     for team_idx in range(12):
         for week_idx in range(weeks_complete):
             team_tots[team_idx] += scores[team_idx][week_idx]
-            league_tot += scores[team_idx][week_idx]
-    league_avg = league_tot / (12.0 * weeks_complete)
+            league_arr.append(scores[team_idx][week_idx])
+    league_arr = np.array(league_arr)
+    league_avg = league_arr.mean()
+    league_std = league_arr.std()
     team_avgs = [team_tots[i] / weeks_complete for i in range(12)]
 
     # Simulate scores for the rest of the season
     for team_idx in range(12):
-        if weeks_complete == 1:
-            sim_avg = week1Weight * team_avgs[team_idx] + (1 - week1Weight) * league_avg
-        elif weeks_complete == 2:
-            sim_avg = week2Weight * team_avgs[team_idx] + (1 - week2Weight) * league_avg
+        if legacy:
+            if weeks_complete == 1:
+                sim_avg = (
+                    week1Weight * team_avgs[team_idx] + (1 - week1Weight) * league_avg
+                )
+            elif weeks_complete == 2:
+                sim_avg = (
+                    week2Weight * team_avgs[team_idx] + (1 - week2Weight) * league_avg
+                )
+            else:
+                sim_avg = weight * team_avgs[team_idx] + (1 - weight) * league_avg
+            gen_scores = nr.normal(sim_avg, std, (17 - weeks_complete))
         else:
-            sim_avg = weight * team_avgs[team_idx] + (1 - weight) * league_avg
-        gen_scores = nr.normal(sim_avg, std, (17 - weeks_complete))
+            sim_league_unscaled = rng.standard_t(
+                (weeks_complete * 12.0) - 1, 17 - weeks_complete
+            )
+            sim_league = sim_league_unscaled * league_std + league_avg
+            if weeks_complete > 2:
+                sim_team_unscaled = rng.standard_t(
+                    (weeks_complete) - 1.0, 17 - weeks_complete
+                )
+                sim_team = sim_team_unscaled * league_std + team_avgs[team_idx]
+                if weeks_complete == 3:
+                    gen_scores = 0.875 * sim_league + 0.125 * sim_team
+                else:
+                    gen_scores = 0.75 * sim_league + 0.25 * sim_team
+
+            else:
+                gen_scores = sim_league
         scores[team_idx][weeks_complete:] = gen_scores
         ret[team_idx]["PF"] = sum(scores[team_idx][:13])
 
@@ -76,6 +104,8 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE):
             opp_score = scores[opponent.value - 1][week]
             if this_score > opp_score:
                 ret[team_idx]["Wins"] += 1
+                if week == weeks_complete:
+                    ret[team_idx]["NextWeekWin"] = 1
             elif this_score < opp_score:
                 ret[team_idx]["Losses"] += 1
             else:
@@ -115,7 +145,7 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE):
     return ret
 
 
-def Bambitron(n):
+def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
     retAgr = []
     for team in T:
         retAgr.append(
@@ -132,6 +162,7 @@ def Bambitron(n):
                 "Bottom 4": 0,
                 "Bolan": 0,
                 "Seeds": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "NextWeekWin": 0,
             }
         )
     keys = retAgr[0].keys()
@@ -140,7 +171,7 @@ def Bambitron(n):
     best_sacko = [0] * 14
     # Sum up results
     for i in range(n):
-        ret = generateSeason()
+        ret = generateSeason(weeks_complete=weeks_complete)
         for team_idx in range(12):
             for key in keys:
                 if key != "Team" and key != "Seeds":
@@ -201,6 +232,19 @@ def Bambitron(n):
         f.write("{},{}\n".format(team["Team"].name, ",".join(team["Seeds"])))
     f.close()
 
+    f = open("NextWeekOdds.csv", "w")
+    f.write("Team,Opponent,Odds\n")
+    for team in retAgr:
+        opponent = SCHEDULE[team["Team"].value - 1][weeks_complete]
+        f.write(
+            "{},{},{}\n".format(
+                team["Team"].name,
+                opponent.name,
+                round(team["NextWeekWin"] * 100, 2),
+            )
+        )
+    f.close()
+
 
 def testSchedule():
     testDict = {}
@@ -222,6 +266,6 @@ def testSchedule():
     print(testDict)
 
 
-Bambitron(50)
+Bambitron(100000, 1)
 # testSchedule()
 # generateSeason()
