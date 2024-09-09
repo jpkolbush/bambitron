@@ -234,8 +234,11 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
 
     f = open("NextWeekOdds.csv", "w")
     f.write("Team,Opponent,Odds\n")
+    used_teams = set()
     for team in retAgr:
         opponent = SCHEDULE[team["Team"].value - 1][weeks_complete]
+        if opponent.name in used_teams:
+            continue
         f.write(
             "{},{},{}\n".format(
                 team["Team"].name,
@@ -243,6 +246,8 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
                 round(team["NextWeekWin"] * 100, 2),
             )
         )
+        used_teams.add(team["Team"].name)
+        used_teams.add(opponent.name)
     f.close()
 
 
