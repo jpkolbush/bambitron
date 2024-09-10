@@ -271,6 +271,6 @@ def testSchedule():
     print(testDict)
 
 
-Bambitron(100000, 1)
-# testSchedule()
+# Bambitron(100000, 1)
+testSchedule()
 # generateSeason()
