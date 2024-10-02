@@ -38,6 +38,7 @@ def getConf(team):
         return 0
     else:
         return 1
+    
 def fetch_league_data():
     url = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2024/segments/0/leagues/550501?scoringPeriodId=0&view=modular&view=mNav&view=mMatchupScore&view=mScoreboard&view=mSettings&view=mTopPerformers&view=mTeam"
     
