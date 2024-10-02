@@ -18,23 +18,20 @@ class T(Enum):
     DUC = 11
     SCOTT = 12
 
-HUMAN_READABLE_NAME_AND_ORDER_MAP = {
-    "jason kolbush": (T.KOLBUSH, "Bush"),
-    "jonathan eady matty cooper": (T.MEADY, "Meady"),
-    "joe maenza": (T.JOE, "Joe"),
-    "nick seidler": (T.NICK, "Nick"),
-    "logan jackson": (T.LOGAN, "Logan"),
-    "tommy  mcclure": (T.MCCLURE, "McClure"),
-    "steven marsh": (T.STEVE, "Steve"),
-    "james davis": (T.JAMES, "James"),
-    "bryce bailey": (T.BRYCE, "Bryce"),
-    "jason h": (T.HUNYAR, "Hunyar"),
-    "tommy lam": (T.DUC, "Duc"),   
-    "scott donaghy": (T.SCOTT, "Scott")
+HUMAN_READABLE_NAME_MAP = {
+    "jason kolbush": "Bush",
+    "jonathan eady matty cooper": "Meady",
+    "joe maenza": "Joe",
+    "nick seidler": "Nick",
+    "logan jackson": "Logan",
+    "tommy  mcclure": "McClure",
+    "steven marsh": "Steve",
+    "james davis": "James",
+    "bryce bailey": "Bryce",
+    "jason h": "Hunyar",
+    "tommy lam": "Duc",   
+    "scott donaghy": "Scott"
 }
-
-
-
 
 def getConf(team):
     if team in [T.DUC, T.MEADY, T.JOE, T.NICK, T.SCOTT, T.MCCLURE]:
@@ -89,13 +86,13 @@ def generate_scores_csv():
         sorted_scores = []
         for team_id, score_list in scores.items():
             team_name = team_to_member[team_id].replace(',', '').lower()
-            enum_value = HUMAN_READABLE_NAME_AND_ORDER_MAP[team_name][0].value
-            sorted_scores.append((team_id, score_list, enum_value))
+            index = list(HUMAN_READABLE_NAME_MAP.keys()).index(team_name)
+            sorted_scores.append((team_id, score_list, index))
         sorted_scores.sort(key=lambda x: x[2])
         sorted_scores = [(team_id, score_list) for team_id, score_list, _ in sorted_scores]
 
         # Create a dictionary to map team names to their scores
-        team_scores = {HUMAN_READABLE_NAME_AND_ORDER_MAP[team_to_member[team_id].replace(',', '').lower()][1]: score_list 
+        team_scores = {HUMAN_READABLE_NAME_MAP[team_to_member[team_id].replace(',', '').lower()]: score_list 
                        for team_id, score_list in sorted_scores}
 
         with open("scores.csv", "w") as f:
