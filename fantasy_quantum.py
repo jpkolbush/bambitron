@@ -29,7 +29,7 @@ def submit_job():
     for matchup in matchups:
         qc = QuantumCircuit(2)
         angle = np.arcsin(np.sqrt(matchup["odds"])) * 2
-        qc.rx(angle, 0)
+        qc.rx(np.pi - angle, 0)
         qc.rx(np.pi, 1)
         qc.cx(0, 1)
         qc.measure_all()
@@ -46,11 +46,13 @@ def submit_job():
 
 
 def get_results():
-    job = service.job("cvfee2gp7drg008m03w0")
+    job = service.job("cvn1wjaex53g008q9dp0")
     print(f">>> Job Status: {job.status()}")
     job_results = job.result()
     f = open("BambitronQuantum.csv", "w")
-    f.write("Team A,Team B,Team A Wins,Team B Wins,Both Win,Both Lose\n")
+    f.write(
+        "Team A,Team B, Team A Wins (Bambitron Classic), Team A Wins,Team B Wins,Both Win,Both Lose\n"
+    )
     for matchup, pub_result in zip(matchups, job_results):
         print(matchup)
 
@@ -60,9 +62,10 @@ def get_results():
                 class_dict[bit_string] = 0
         print(f"Counts for the meas output register: {class_dict}")
         f.write(
-            "{},{},{},{},{},{}\n".format(
+            "{},{},{}%,{}%,{}%,{}%,{}%\n".format(
                 matchup["Q0"],
                 matchup["Q1"],
+                matchup["odds"] * 100,
                 class_dict["10"],
                 class_dict["01"],
                 class_dict["11"],
@@ -72,5 +75,5 @@ def get_results():
     f.close()
 
 
-# submit_job()
-get_results()
+submit_job()
+# get_results()

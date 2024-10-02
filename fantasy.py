@@ -8,9 +8,9 @@ from fantasy_core import *
 
 # std = 20.77989
 std = 25
-week1Weight = 0.05
-week2Weight = 0.3
-weight = 0.465214410626
+week1Weight = 0.15
+week2Weight = 0.25
+weight = 0.4
 
 
 def sortSeed(teamRes):
@@ -28,7 +28,7 @@ def sortSeedEnd(teamRes):
 # weeks_complete = 2
 
 
-def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=False):
+def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
     scores = copy.deepcopy(SCORES)
     # List of results for each team
     ret = []
@@ -81,12 +81,12 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=False):
                 (weeks_complete * 12.0) - 1, 17 - weeks_complete
             )
             sim_league = sim_league_unscaled * league_std + league_avg
-            if weeks_complete > 2:
+            if weeks_complete >= 2:
                 sim_team_unscaled = rng.standard_t(
                     (weeks_complete) - 1.0, 17 - weeks_complete
                 )
                 sim_team = sim_team_unscaled * league_std + team_avgs[team_idx]
-                if weeks_complete == 3:
+                if weeks_complete <= 3:
                     gen_scores = 0.875 * sim_league + 0.125 * sim_team
                 else:
                     gen_scores = 0.75 * sim_league + 0.25 * sim_team
@@ -208,7 +208,7 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
 
     # write results
     f = open("BambitronResults.csv", "w")
-    f.write("Team,Wins,Losses,Seed,PF, Playoffs,Haley,Bottom 4,Bolan\n")
+    f.write("Team,Wins,Losses,Seed,Avg PF,Playoffs,Haley,Bottom 4,Bolan\n")
     for team in retAgr:
         f.write(
             "{},{},{},{},{},{},{},{},{}\n".format(
@@ -216,7 +216,7 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
                 round(team["Wins"], 1),
                 round(team["Losses"], 1),
                 round(team["Seed"], 1),
-                round(team["PF"], 1),
+                round(team["PF"] / 13.0, 2),
                 round(team["Playoffs"] * 100, 2),
                 round(team["Champion"] * 100, 2),
                 round(team["Bottom 4"] * 100, 2),
@@ -271,6 +271,6 @@ def testSchedule():
     print(testDict)
 
 
-# Bambitron(100000, 1)
-testSchedule()
+Bambitron(250000)
+# testSchedule()
 # generateSeason()
