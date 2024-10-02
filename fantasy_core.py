@@ -18,6 +18,7 @@ class T(Enum):
     DUC = 11
     SCOTT = 12
 
+# Order of this should match the enum order
 HUMAN_READABLE_NAME_MAP = {
     "jason kolbush": "Bush",
     "jonathan eady matty cooper": "Meady",
