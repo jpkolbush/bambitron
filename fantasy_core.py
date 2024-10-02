@@ -18,7 +18,7 @@ class T(Enum):
     DUC = 11
     SCOTT = 12
 
-HUMAN_READABLE_NAME_MAP = {
+HUMAN_READABLE_NAME_AND_ORDER_MAP = {
     "jason kolbush": (T.KOLBUSH, "Bush"),
     "jonathan eady matty cooper": (T.MEADY, "Meady"),
     "joe maenza": (T.JOE, "Joe"),
@@ -89,13 +89,13 @@ def generate_scores_csv():
         sorted_scores = []
         for team_id, score_list in scores.items():
             team_name = team_to_member[team_id].replace(',', '').lower()
-            enum_value = HUMAN_READABLE_NAME_MAP[team_name][0].value
+            enum_value = HUMAN_READABLE_NAME_AND_ORDER_MAP[team_name][0].value
             sorted_scores.append((team_id, score_list, enum_value))
         sorted_scores.sort(key=lambda x: x[2])
         sorted_scores = [(team_id, score_list) for team_id, score_list, _ in sorted_scores]
 
         # Create a dictionary to map team names to their scores
-        team_scores = {HUMAN_READABLE_NAME_MAP[team_to_member[team_id].replace(',', '').lower()][1]: score_list 
+        team_scores = {HUMAN_READABLE_NAME_AND_ORDER_MAP[team_to_member[team_id].replace(',', '').lower()][1]: score_list 
                        for team_id, score_list in sorted_scores}
 
         with open("scores.csv", "w") as f:
