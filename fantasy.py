@@ -122,6 +122,11 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
         second_seed_idx += 1
     ret.insert(1, ret.pop(second_seed_idx))
 
+    eleventh_seed_idx = 10
+    while getConf(ret[eleventh_seed_idx]["Team"]) == getConf(ret[11]["Team"]):
+        eleventh_seed_idx -= 1
+    ret.insert(10, ret.pop(eleventh_seed_idx))
+
     for seed in range(1, 13):
         ret[seed - 1]["Seed"] = seed
         if seed < 5:
