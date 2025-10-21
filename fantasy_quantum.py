@@ -74,6 +74,18 @@ def get_results():
         )
     f.close()
 
+def login():
+    from qiskit_ibm_runtime import QiskitRuntimeService
+ 
+    QiskitRuntimeService.save_account(
+    token=token,
+    channel="ibm_quantum_platform", # `channel` distinguishes between different account types.
+    instance="instance-CRN or instance-name", # Optionally copy the instance CRN or name from the Instance section on the dashboard.
+    name="account-name", # Optionally name this set of credentials.
+    overwrite=True, # Only needed if you already have Cloud credentials.
+    set_as_default=True # Only needed if you want these credentials to be used as the default account.
+    # This is recommended if you have an IQP classic account set as the default.
+    )
 
 submit_job()
 # get_results()
