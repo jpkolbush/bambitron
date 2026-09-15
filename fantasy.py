@@ -47,6 +47,7 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
                 "Bottom 4": 0,
                 "Bolan": 0,
                 "NextWeekWin": 0,
+                "W/L": np.zeros((13))
             }
         )
 
@@ -104,6 +105,7 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
             opp_score = scores[opponent.value - 1][week]
             if this_score > opp_score:
                 ret[team_idx]["Wins"] += 1
+                ret[team_idx]["W/L"][week] += 1
                 if week == weeks_complete:
                     ret[team_idx]["NextWeekWin"] = 1
             elif this_score < opp_score:
@@ -111,6 +113,8 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
             else:
                 ret[team_idx]["Wins"] += 0.5
                 ret[team_idx]["Losses"] += 0.5
+                ret[team_idx]["W/L"][team_idx, week] += 0.5
+
         ret[team_idx]["Rd1"] = scores[team_idx][13] + scores[team_idx][14]
         ret[team_idx]["Rd2"] = scores[team_idx][15] + scores[team_idx][16]
 
@@ -149,8 +153,35 @@ def generateSeason(weeks_complete=AUTO_WEEKS_COMPLETE, legacy=True):
     ret.sort(key=sortTeamEnum)
     return ret
 
+class PlayoffScenario():
+    def __init__(self, team: T):
+        self.team = team
+        self.wl_results = np.zeros((12, 13))
+        self.count = 0
+    
+    def add_schedule(self, schedule):
+        if (schedule[self.team.value - 1]["Playoffs"] == 1):
+            self.count += 1
+            for i in range(12):
+                self.wl_results[i] += schedule[i]["W/L"]
 
-def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
+    def process_and_print(self):
+        print(f"Count is {self.count}")
+        self.wl_results /= self.count
+        self.wl_results *= 100
+        game_by_game_results = []
+        for team in T:
+            for week in range(AUTO_WEEKS_COMPLETE, 13):
+                wl_record = self.wl_results[team.value -1, week]
+                game_by_game_results.append((wl_record, team.name, SCHEDULE[team.value - 1][week].name, week))
+
+        sorted_list = sorted(game_by_game_results, key=lambda game: (game[0], 15-game[3]), reverse=True) 
+        # self.wl_results = self.wl_results[:]
+        for _ in sorted_list:
+            print("{0:.2f}%: {1} win over {2}, week {3}".format(_[0], _[1], _[2], _[3]+1))
+    
+
+def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE, playoff_team=None):
     retAgr = []
     for team in T:
         retAgr.append(
@@ -174,9 +205,15 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
 
     worst_playoffs = [0] * 14
     best_sacko = [0] * 14
+
+    if playoff_team is not None:
+        playoff_scenario = PlayoffScenario(playoff_team)
+
     # Sum up results
     for i in range(n):
         ret = generateSeason(weeks_complete=weeks_complete)
+        if playoff_team is not None:
+            playoff_scenario.add_schedule(ret)
         for team_idx in range(12):
             for key in keys:
                 if key != "Team" and key != "Seeds":
@@ -193,6 +230,8 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
                         if type(ret[team_idx]["Wins"]) is int:
                             best_sacko[ret[team_idx]["Wins"]] += 1
 
+    if playoff_team is not None:
+        playoff_scenario.process_and_print()
     # Average out results
     for team_idx in range(12):
         for key in keys:
@@ -237,6 +276,8 @@ def Bambitron(n, weeks_complete=AUTO_WEEKS_COMPLETE):
         f.write("{},{}\n".format(team["Team"].name, ",".join(team["Seeds"])))
     f.close()
 
+    if weeks_complete >= len(SCHEDULE[0]):
+        return
     f = open("NextWeekOdds.csv", "w")
     f.write("Team,Opponent,Odds\n")
     used_teams = set()
@@ -276,6 +317,6 @@ def testSchedule():
     print(testDict)
 
 
-Bambitron(250000)
+Bambitron(300_000)
 # testSchedule()
 # generateSeason()
